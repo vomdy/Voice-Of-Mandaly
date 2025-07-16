@@ -1,0 +1,202 @@
+import time
+import os
+import re
+import asyncio
+import logging
+from dotenv import load_dotenv
+
+from telegram import Update, ChatPermissions
+from telegram.constants import ParseMode
+from telegram.ext import (
+    Application,
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters
+)
+
+# Load environment variables
+load_dotenv()
+
+# Set up logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Helper function to check admin status
+async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    user = update.effective_user
+    chat = update.effective_chat
+    admins = await context.bot.get_chat_administrators(chat.id)
+    return any(admin.user.id == user.id for admin in admins)
+
+# /start command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("✅ Hello! I'm your group help bot.")
+
+# Welcome message
+async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        if not update.message or not update.message.new_chat_members:
+            return
+
+        for member in update.message.new_chat_members:
+            if member.id == context.bot.id:
+                continue
+
+            name = member.full_name
+            username = f"@{member.username}" if member.username else "(no username)"
+            user_id = member.id
+
+            welcome_message = (
+                f"မင်္ဂလာပါ {name}\n"
+                f"Username - {username} ({user_id})\n\n"
+                f"Voice Of Mandalay (VOM) တော်လှန်ရေးသတင်း Group မှကြိုဆိုပါတယ်။\n\n"
+                f"⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯\n"
+                f"‼️ သတိပြုရန်‼️\n"
+                f"Profile၊ Phone Number၊ တည်နေရာ မဖော်ပြရန်။ သတင်းပေးရန် /admin ကိုနှိပ်ပါ။"
+            )
+            await update.message.reply_text(welcome_message)
+
+    except Exception as e:
+        logger.error(f"Welcome error: {e}")
+
+# Filter links
+async def filter_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message or not update.message.text:
+        return
+
+    text = update.message.text.lower()
+    blocked_patterns = [
+        r'http[s]?://',
+        r'www\.',
+        r'\.com',
+        r't\.me/',
+        r'@\w+'
+    ]
+
+    if any(re.search(pattern, text) for pattern in blocked_patterns):
+        try:
+            await update.message.delete()
+            warning_msg = await context.bot.send_message(
+                chat_id=update.message.chat.id,
+                text=(f"⚠️ {update.message.from_user.mention_html()}, 🚫 Group အတွင်း Link မပြုလုပ်ပါနဲ့။"),
+                parse_mode=ParseMode.HTML
+            )
+            await asyncio.sleep(10)
+            await warning_msg.delete()
+        except Exception as e:
+            logger.error(f"Error in filter_links: {e}")
+
+# /rules
+async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    rules_text = """
+📜 <b>အုပ်စုစည်းမျဉ်းများ</b>:
+1. လောင်းကစားကြော်ငြာ၊ refer မပြုလုပ်ပါနှင့်။
+2. မတရားသုံးသပ်ခြင်း မပြုလုပ်ပါနှင့်။
+3. တော်လှန်ရေးအဖွဲ့ဝင်များအကြား အငြင်းအချင်း မဖြစ်အောင်စကားလုံးများ မပြောပါနှင့်။
+"""
+    await update.message.reply_text(rules_text, parse_mode=ParseMode.HTML)
+
+# /admin
+async def admin_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        predefined_admins = [
+            "@Oakgyi1116",
+            "@bebeex124",
+            "@GuGuLay1234"
+        ]
+        message = (
+            "🔷 <b>Admin များ:</b>\n\n" +
+            "\n".join([f"• {admin}" for admin in predefined_admins]) +
+            "\n\nတစ်စုံတစ်ယောက်နှင့် DM ဆက်သွယ်ပါ။"
+        )
+        await update.message.reply_text(message, parse_mode=ParseMode.HTML)
+    except Exception as e:
+        logger.error(f"Admin list error: {e}")
+
+# /ban
+async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await is_admin(update, context):
+        await update.message.reply_text("❌ သင့်အား admin ဖြစ်ရပါမည်။")
+        return
+
+    if not context.args or not context.args[0].isdigit():
+        await update.message.reply_text("အသုံးပြုနည်း: /ban <user_id> [အကြောင်းရင်း]")
+        return
+
+    user_id = int(context.args[0])
+    reason = " ".join(context.args[1:]) if len(context.args) > 1 else "စည်းမျဉ်းချိုးမှု"
+
+    try:
+        await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=user_id)
+        await update.message.reply_text(f"🚫 User {user_id} ကို ban လုပ်ပြီးပါပြီ။\nအကြောင်းအရင်း: {reason}")
+    except Exception as e:
+        logger.error(f"Ban error: {e}")
+        await update.message.reply_text("❌ Ban လုပ်ရာတွင် အမှားတစ်ခုဖြစ်နေပါသည်။")
+
+# /report
+async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        reported_msg = update.message.reply_to_message
+        if not reported_msg:
+            await update.message.reply_text("⚠️ Reply ပြန်ပြီး /report သုံးပါ။")
+            return
+
+        reporter = update.effective_user
+        reported_user = reported_msg.from_user
+
+        report_text = (
+            f"⚠️ Report\n"
+            f"👤 Reported by: {reporter.mention_html()} ({reporter.id})\n"
+            f"🧾 Target: {reported_user.mention_html()} ({reported_user.id})\n\n"
+            f"📄 Message:\n{reported_msg.text or 'Media'}"
+        )
+
+        admins = await context.bot.get_chat_administrators(update.effective_chat.id)
+        for admin in admins:
+            try:
+                await context.bot.send_message(
+                    chat_id=admin.user.id,
+                    text=report_text,
+                    parse_mode=ParseMode.HTML
+                )
+            except Exception as e:
+                logger.error(f"Failed to send report to admin {admin.user.id}: {e}")
+
+        await update.message.reply_text("✅ Admin များထံပေးပို့ပြီးပါပြီ။")
+
+    except Exception as e:
+        logger.error(f"Report error: {e}")
+        await update.message.reply_text("❌ Report error ဖြစ်နေပါသည်။")
+
+# Async main function
+async def main():
+    TOKEN = os.getenv("BOT_TOKEN")
+    if not TOKEN:
+        raise Exception("Missing BOT_TOKEN in environment variables")
+
+    app: Application = ApplicationBuilder().token(TOKEN).build()
+
+    # Add handlers
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("rules", rules))
+    app.add_handler(CommandHandler("admin", admin_list))
+    app.add_handler(CommandHandler("ban", ban_user))
+    app.add_handler(CommandHandler("report", report_user))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, filter_links))
+
+    print("🤖 Bot is starting...")
+    await app.run_polling()
+
+# Entry point
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        print(f"🔥 Critical Error: {e}")
+        time.sleep(10)
