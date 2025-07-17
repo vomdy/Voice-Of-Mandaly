@@ -1,14 +1,15 @@
 import time
 import os
 import re
+import asyncio
 import logging
 from dotenv import load_dotenv
-import asyncio
 
 from telegram import Update, ChatPermissions
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
+    ApplicationBuilder,
     CommandHandler,
     MessageHandler,
     ContextTypes,
@@ -91,7 +92,7 @@ async def filter_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.delete()
             warning_msg = await context.bot.send_message(
                 chat_id=update.message.chat.id,
-                text=(f"⚠️ {update.message.from_user.mention_html()}, 🚫 Group အတွင်း Link မပြုလုပ်ပါနဲ့။"),
+                text=(f"⚠️ {update.message.from_user.mention_html()}, 🚫 Group အတွင်း Link ပေးပို့ခြင်းကိုတားမြစ်ထားသည်။"),
                 parse_mode=ParseMode.HTML
             )
             await asyncio.sleep(10)
@@ -177,17 +178,25 @@ async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 logger.error(f"Report sending error: {e}")
 
-# Main function
-def main():
-    print("🤖 Bot is starting...")
-    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+# Async main function
+async def main():
+    TOKEN = os.getenv("BOT_TOKEN")  # Make sure to set this in your .env file
+
+    app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(CommandHandler("rules", rules))
+    app.add_handler(CommandHandler("admin", admin_list))
+    app.add_handler(CommandHandler("ban", ban_user))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
+    app.add_handler(MessageHandler(filters.TEXT, filter_links))
 
-    # DO NOT use asyncio.run() here!
-    app.run_polling()
+    print("🤖 Bot is starting...")
+    await app.run_polling()
 
+# Entry point
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())  # Use asyncio.run() to start event loop
+    except Exception as e:
+        logger.error(f"Main error: {e}")
