@@ -26,15 +26,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Helper function to check admin status
 async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     user = update.effective_user
     chat = update.effective_chat
     admins = await context.bot.get_chat_administrators(chat.id)
     return any(admin.user.id == user.id for admin in admins)
 
+# /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Hello! I'm your group help bot.")
 
+# Welcome message
 async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if not update.message or not update.message.new_chat_members:
@@ -53,23 +56,24 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Username - {username} ({user_id})\n\n"
                 f"Voice Of Mandalay (VOM) တော်လှန်ရေးသတင်း Group မှကြိုဆိုပါတယ်။\n\n"
                 f"ကျွန်တော် ကတော့ စကစကိုတော်လှန်နေတဲ့တော်လှန်‌ရေးမှာပါဝင်နေတဲ့ တော်လှန်စက်ရုပ်တစ်ကောင်ပဲဖြစ်ပါတယ်။\n"
-                f"ကျွန်တော်တို့ Voice Of Mandalay (VOM)Groupအတွင်းသို့ ဝင်ရောက်ထားမည်ဆိုပါက မိဘပြည်သူများ လုံခြုံရေးအတွက် အောက်ပါအချက်များကို သတိပြု ရန်လိုအပ်ပါသည်။ \n"
-                f"၁။ Profile တွင်မိမိ၏ပုံ အစစ်မှန်ကို မတင်ထားရန်၊\n"   
+                f"ကျွန်တော်တို Voice Of Mandalay (VOM)Groupအတွင်းသို ဝင်ရောက်ထားမည်ဆိုပါက မိဘပြည်သူများ လုံခြုံရေးအတွက် အောက်ပါအချက်များကို သတိပြုရန်လိုအပ်ပါသည်။ \n"
+                f"၁။ Profile တွင်မိမိ၏ပုံ အစစ်မှန်ကို မတင်ထားရန်၊\n"
                 f"၂။ ဖုန်းနံပါတ်ကိုဖျောက်ထားရန်၊\n"
-                f"၃။ မိမိ၏တည်နေရာကို public chat(သို့) DM တွင်ထုတ်ဖော်မပြောမိစေရန်၊\n"
-                f"၄။သတင်းပေးပို့မည် ဆိုပါက adminထံသို့ DMမှတစ်ဆင့် ဆက်သွယ်သတင်းပေးပို့ရန်တို့ဖြစ်ပါသည်။ \n"
+                f"၃။ မိမိ၏တည်နေရာကို public chat(သို) DM တွင်ထုတ်ဖော်မပြောမိစေရန်၊\n"
+                f"၄။ သတင်းပေးပိုမည် ဆိုပါက admin ထံသို့ DM မှတစ်ဆင့် ဆက်သွယ်သတင်းပေးရန်ဖြစ်ပါသည်။ \n"
                 f"မိဘပြည်သူများ အနေဖြင့်-\n"
                 f"စကစ၏ယုတ်မာရက်စက်မှုများ\n"
                 f"ဧည့်စားရင်းစစ်သတင်းများ\n"
                 f"စကစ၏လှုပ်ရှားမှု သတင်းများ\n"
-                f"စစ်မှုထမ်းရန်ဖမ်းဆီးခေါ် ဆောင်သော သတင်းများကို \n"               
-                f"  adminထံသို့သတင်းပေးရန် /admin ကိုနှိပ်ပါ။"
+                f"စစ်မှုထမ်းရန်ဖမ်းဆီးခေါ်ဆောင်သော သတင်းများကို \n"
+                f"admin ထံသို့သတင်းပေးရန် /admin ကိုနှိပ်ပါ။"
             )
             await update.message.reply_text(welcome_message)
 
     except Exception as e:
         logger.error(f"Welcome error: {e}")
 
+# Filter links
 async def filter_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.text:
         return
@@ -88,7 +92,7 @@ async def filter_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.delete()
             warning_msg = await context.bot.send_message(
                 chat_id=update.message.chat.id,
-                text=(f"⚠️ {update.message.from_user.mention_html()}, 🚫 Group အတွင်း Link ပေးပို့ခြင်းကိုတားမြစ်ထားသည်။"),
+                text=(f"⚠️ {update.message.from_user.mention_html()}, 🚫 Group အတွင်း Link ပေးပိုခြင်းကိုတားမြစ်ထားသည်။"),
                 parse_mode=ParseMode.HTML
             )
             await asyncio.sleep(10)
@@ -96,17 +100,19 @@ async def filter_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"Error in filter_links: {e}")
 
+# /rules command
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     rules_text = """
 📜 <b>အုပ်စုစည်းမျဉ်းများ</b>:
 1. လောင်းကစားကြော်ငြာများ၊ refer မပြုလုပ်ပါနဲ့။
-2. တော်လှန်ရေးနှင့် ပတ်သတ်သောအကြောင်းအရာများကို လွတ်လပ်စွာဆွေးနွေးနိုင်ပါသည်။
-3.အဖွဲ့ဝင် မိဘပြည်သူများ စိတ်အနှောက်အယှက်ဖြစ်စေသည် message များ မပို့ရ ။ 
-4.တော်လှန်ပြည်သူအချင်းချင်း စိတ်ဝမ်းကွဲစေနိုင်သော စကားလုံးများမပြော ဆိုရ။
+2. တော်လှန်ရေးနှင့်ပတ်သတ်သောအကြောင်းအရာများကို လွတ်လပ်စွာဆွေးနွေးနိုင်ပါသည်။
+3. မိဘပြည်သူများ စိတ်အနှောက်အယှက်ဖြစ်စေသည် message များ မပိုပါနှင့်။
+4. တော်လှန်ပြည်သူအချင်းချင်း စိတ်ဝမ်းကွဲစေနိုင်သော စကားလုံးများ မပြောဆိုပါနှင့်။
 ***အခြားစည်းကမ်းချက်များ လိုအပ်လာပါက admin များမှ ထပ်မံဖြည့်သွင်းသတ်မှတ်သွားပါမည်။***
 """
     await update.message.reply_text(rules_text, parse_mode=ParseMode.HTML)
 
+# /admin command
 async def admin_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         predefined_admins = [
@@ -117,12 +123,13 @@ async def admin_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = (
             "🔷 <b>Admin များ:</b>\n\n" +
             "\n".join([f"• {admin}" for admin in predefined_admins]) +
-            "\n\nသတင်းပေးပို့ရန် admin ၏ DM သို့ ဆက်သွယ်ပါ။"
+            "\n\nသတင်းပေးပိုရန် admin ၏ DM သို့ ဆက်သွယ်ပါ။"
         )
         await update.message.reply_text(message, parse_mode=ParseMode.HTML)
     except Exception as e:
         logger.error(f"Admin list error: {e}")
 
+# /ban command
 async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await is_admin(update, context):
         await update.message.reply_text("❌ သင့်အား admin ဖြစ်ရပါမည်။")
@@ -142,6 +149,7 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Ban error: {e}")
         await update.message.reply_text("❌ Ban လုပ်ရာတွင် အမှားတစ်ခုဖြစ်နေပါသည်။")
 
+# /report command
 async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         reported_msg = update.message.reply_to_message
@@ -169,50 +177,32 @@ async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             except Exception as e:
                 logger.error(f"Report sending error: {e}")
+    except Exception as e:
+        logger.error(f"Report error: {e}")
 
+# Async main function
 async def main():
     TOKEN = os.getenv("BOT_TOKEN")
 
-    try:
-        app = Application.builder().token(TOKEN).build()
+    if not TOKEN:
+        raise Exception("Missing BOT_TOKEN in environment variables")
 
-        # Add handlers
-        app.add_handler(CommandHandler("start", start))
-        app.add_handler(CommandHandler("rules", rules))
-        app.add_handler(CommandHandler("admin", admin_list))
-        app.add_handler(CommandHandler("ban", ban_user))
-        app.add_handler(CommandHandler("report", report_user))
-        app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
-        app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), filter_links))
+    app = Application.builder().token(TOKEN).build()
 
-        logger.info("🤖 Bot is starting...")
-        await app.initialize()
-        await app.start()
-        await app.updater.start_polling()
-        
-        while True:
-            await asyncio.sleep(3600)  # Keep the bot running
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("rules", rules))
+    app.add_handler(CommandHandler("admin", admin_list))
+    app.add_handler(CommandHandler("ban", ban_user))
+    app.add_handler(CommandHandler("report", report_user))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
+    app.add_handler(MessageHandler(filters.TEXT, filter_links))
 
-    except asyncio.CancelledError:
-        logger.info("🛑 Received stop signal, shutting down...")
-    except Exception as e:
-        logger.error(f"Fatal error: {e}")
-    finally:
-        if 'app' in locals():
-            await app.updater.stop()
-            await app.stop()
-            await app.shutdown()
+    print("🤖 Bot is starting...")
+    await app.run_polling()
 
+# Entry point
 if __name__ == "__main__":
     try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
-    except KeyboardInterrupt:
-        logger.info("🛑 Bot stopped by user")
+        asyncio.run(main())
     except Exception as e:
-        logger.error(f"Main loop error: {e}")
-    finally:
-        pending = asyncio.all_tasks(loop=loop)
-        for task in pending:
-            task.cancel()
-        loop.close()
+        logger.error(f"Main error: {e}")
