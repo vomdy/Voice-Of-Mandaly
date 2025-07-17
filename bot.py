@@ -55,9 +55,18 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"မင်္ဂလာပါ {name}\n"
                 f"Username - {username} ({user_id})\n\n"
                 f"Voice Of Mandalay (VOM) တော်လှန်ရေးသတင်း Group မှကြိုဆိုပါတယ်။\n\n"
-                f"⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯\n"
-                f"‼️ သတိပြုရန်‼️\n"
-                f"Profile၊ Phone Number၊ တည်နေရာ မဖော်ပြရန်။ သတင်းပေးရန် /admin ကိုနှိပ်ပါ။"
+                f"ကျွန်တော် ကတော့ စကစကိုတော်လှန်နေတဲ့တော်လှန်‌ရေးမှာပါဝင်နေတဲ့ တော်လှန်စက်ရုပ်တစ်ကောင်ပဲဖြစ်ပါတယ်။\n"
+                f"ကျွန်တော်တို့ Voice Of Mandalay (VOM)Groupအတွင်းသို့ ဝင်ရောက်ထားမည်ဆိုပါက မိဘပြည်သူများ လုံခြုံရေးအတွက် အောက်ပါအချက်များကို သတိပြု ရန်လိုအပ်ပါသည်။ \n"
+                f"၁။ Profile တွင်မိမိ၏ပုံ အစစ်မှန်ကို မတင်ထားရန်၊\n"   
+                f"၂။ ဖုန်းနံပါတ်ကိုဖျောက်ထားရန်၊\n"
+                f"၃။ မိမိ၏တည်နေရာကို public chat(သို့) DM တွင်ထုတ်ဖော်မပြောမိစေရန်၊\n"
+                f"၄။သတင်းပေးပို့မည် ဆိုပါက adminထံသို့ DMမှတစ်ဆင့် ဆက်သွယ်သတင်းပေးပို့ရန်တို့ဖြစ်ပါသည်။ \n"
+                f"မိဘပြည်သူများ အနေဖြင့်-\n"
+                f"စကစ၏ယုတ်မာရက်စက်မှုများ\n"
+                f"ဧည့်စားရင်းစစ်သတင်းများ\n"
+                f"စကစ၏လှုပ်ရှားမှု သတင်းများ\n"
+                f"စစ်မှုထမ်းရန်ဖမ်းဆီးခေါ် ဆောင်သော သတင်းများကို \n"               
+                f"  adminထံသို့သတင်းပေးရန် /admin ကိုနှိပ်ပါ။"
             )
             await update.message.reply_text(welcome_message)
 
@@ -95,9 +104,11 @@ async def filter_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     rules_text = """
 📜 <b>အုပ်စုစည်းမျဉ်းများ</b>:
-1. လောင်းကစားကြော်ငြာ၊ refer မပြုလုပ်ပါနှင့်။
-2. မတရားသုံးသပ်ခြင်း မပြုလုပ်ပါနှင့်။
-3. တော်လှန်ရေးအဖွဲ့ဝင်များအကြား အငြင်းအချင်း မဖြစ်အောင်စကားလုံးများ မပြောပါနှင့်။
+1. လောင်းကစားကြော်ငြာများ၊ refer မပြုလုပ်ပါနှင့်။
+2. တော်လှန်ရေးနှင့် ပတ်သတ်သောအကြောင်းအရာများကို လွတ်လပ်စွာဆွေးနွေးနိုင်ပါသည်။
+3.အဖွဲ့ဝင် မိဘပြည်သူများ စိတ်အနှောက်အယှက်ဖြစ်စေသည် message များ မပို့ရ ။ 
+4.တော်လှန်ပြည်သူအချင်းချင်း စိတ်ဝမ်းကွဲစေနိုင်သော စကားလုံးများမပြော ဆိုရ။
+***အခြားစည်းကမ်းချက်များ လိုအပ်လာပါက admin များမှ ထပ်မံဖြည့်သွင်းသတ်မှတ်သွားပါမည်။***
 """
     await update.message.reply_text(rules_text, parse_mode=ParseMode.HTML)
 
@@ -112,7 +123,7 @@ async def admin_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = (
             "🔷 <b>Admin များ:</b>\n\n" +
             "\n".join([f"• {admin}" for admin in predefined_admins]) +
-            "\n\nတစ်စုံတစ်ယောက်နှင့် DM ဆက်သွယ်ပါ။"
+            "\n\nသတင်းပေးပို့ရန် admin ၏ DM သို့ ဆက်သွယ်ပါ။"
         )
         await update.message.reply_text(message, parse_mode=ParseMode.HTML)
     except Exception as e:
@@ -165,38 +176,4 @@ async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode=ParseMode.HTML
                 )
             except Exception as e:
-                logger.error(f"Failed to send report to admin {admin.user.id}: {e}")
-
-        await update.message.reply_text("✅ Admin များထံပေးပို့ပြီးပါပြီ။")
-
-    except Exception as e:
-        logger.error(f"Report error: {e}")
-        await update.message.reply_text("❌ Report error ဖြစ်နေပါသည်။")
-
-# Async main function
-async def main():
-    TOKEN = os.getenv("BOT_TOKEN")
-    if not TOKEN:
-        raise Exception("Missing BOT_TOKEN in environment variables")
-
-    app: Application = ApplicationBuilder().token(TOKEN).build()
-
-    # Add handlers
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("rules", rules))
-    app.add_handler(CommandHandler("admin", admin_list))
-    app.add_handler(CommandHandler("ban", ban_user))
-    app.add_handler(CommandHandler("report", report_user))
-    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, filter_links))
-
-    print("🤖 Bot is starting...")
-    await app.run_polling()
-
-# Entry point
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except Exception as e:
-        print(f"🔥 Critical Error: {e}")
-        time.sleep(10)
+                logger.error
