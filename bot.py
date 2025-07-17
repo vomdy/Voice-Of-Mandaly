@@ -178,20 +178,16 @@ async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.error(f"Report sending error: {e}")
 
 # Main function
-async def main():
-    TOKEN = os.getenv("BOT_TOKEN")  # Make sure to set this in your .env file
-
-    app = Application.builder().token(TOKEN).build()
+def main():
+    print("🤖 Bot is starting...")
+    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("rules", rules))
-    app.add_handler(CommandHandler("admin", admin_list))
-    app.add_handler(CommandHandler("ban", ban_user))
-    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
-    app.add_handler(MessageHandler(filters.TEXT, filter_links))
+    app.add_handler(CommandHandler("help", help))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("🤖 Bot is starting...")
-    await app.run_polling()
+    # DO NOT use asyncio.run() here!
+    app.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())  # Properly start and close the event loop
+    main()
