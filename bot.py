@@ -9,7 +9,6 @@ from telegram import Update, ChatPermissions
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
-    ApplicationBuilder,
     CommandHandler,
     MessageHandler,
     ContextTypes,
@@ -57,7 +56,7 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Voice Of Mandalay (VOM) တော်လှန်ရေးသတင်း Group မှကြိုဆိုပါတယ်။\n\n"
                 f"ကျွန်တော် ကတော့ စကစကိုတော်လှန်နေတဲ့တော်လှန်‌ရေးမှာပါဝင်နေတဲ့ တော်လှန်စက်ရုပ်တစ်ကောင်ပဲဖြစ်ပါတယ်။\n"
                 f"ကျွန်တော်တို Voice Of Mandalay (VOM)Groupအတွင်းသို ဝင်ရောက်ထားမည်ဆိုပါက မိဘပြည်သူများ လုံခြုံရေးအတွက် အောက်ပါအချက်များကို သတိပြုရန်လိုအပ်ပါသည်။ \n"
-                f"၁။ Profile တွင်မိမိ၏ပုံ အစစ်မှန်ကို မတင်ထားရန်၊\n"
+                f"၁။ Profile တွင်မိမိ၏ပုံ အစစ်မှန်ကို မတင်ထားရန်၊\n"   
                 f"၂။ ဖုန်းနံပါတ်ကိုဖျောက်ထားရန်၊\n"
                 f"၃။ မိမိ၏တည်နေရာကို public chat(သို) DM တွင်ထုတ်ဖော်မပြောမိစေရန်၊\n"
                 f"၄။ သတင်းပေးပိုမည် ဆိုပါက admin ထံသို့ DM မှတစ်ဆင့် ဆက်သွယ်သတင်းပေးရန်ဖြစ်ပါသည်။ \n"
@@ -203,6 +202,6 @@ async def main():
 # Entry point
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        asyncio.run(main())  # Ensure proper shutdown of event loop
     except Exception as e:
         logger.error(f"Main error: {e}")
