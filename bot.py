@@ -1,11 +1,7 @@
-import time
 import os
-import re
-import asyncio
 import logging
 from dotenv import load_dotenv
-
-from telegram import Update, ChatPermissions
+from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
@@ -18,12 +14,17 @@ from telegram.ext import (
 # Load environment variables
 load_dotenv()
 
-# Set up logging
+# Logging setup
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# Example command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("✅ Bot is running!")
+
 
 # Helper function to check admin status
 async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
@@ -179,29 +180,19 @@ async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Report error: {e}")
 
-# Async main function
-async def main():
+# Main function (❌ no async!)
+def main():
     TOKEN = os.getenv("BOT_TOKEN")
-
     if not TOKEN:
         raise Exception("Missing BOT_TOKEN in environment variables")
 
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("rules", rules))
-    app.add_handler(CommandHandler("admin", admin_list))
-    app.add_handler(CommandHandler("ban", ban_user))
-    app.add_handler(CommandHandler("report", report_user))
-    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
-    app.add_handler(MessageHandler(filters.TEXT, filter_links))
+    app.add_handler(MessageHandler(filters.TEXT, lambda update, context: update.message.reply_text("Echo: " + update.message.text)))
 
     print("🤖 Bot is starting...")
-    await app.run_polling()
+    app.run_polling()  # ✅ Do NOT await this!
 
-# Entry point
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())  # Ensure proper shutdown of event loop
-    except Exception as e:
-        logger.error(f"Main error: {e}")
+    main()  # ✅ Do NOT use asyncio.run()
