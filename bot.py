@@ -1,15 +1,14 @@
 import time
 import os
 import re
-import asyncio
 import logging
 from dotenv import load_dotenv
+import asyncio
 
 from telegram import Update, ChatPermissions
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
-    ApplicationBuilder,
     CommandHandler,
     MessageHandler,
     ContextTypes,
@@ -178,7 +177,7 @@ async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 logger.error(f"Report sending error: {e}")
 
-# Async main function
+# Main function
 async def main():
     TOKEN = os.getenv("BOT_TOKEN")  # Make sure to set this in your .env file
 
@@ -194,6 +193,5 @@ async def main():
     print("🤖 Bot is starting...")
     await app.run_polling()
 
-# Entry point
 if __name__ == "__main__":
-    asyncio.run(main())  # Use asyncio.run to properly start and close the event loop
+    asyncio.run(main())  # Properly start and close the event loop
