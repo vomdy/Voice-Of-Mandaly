@@ -104,7 +104,7 @@ async def filter_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     rules_text = """
 📜 <b>အုပ်စုစည်းမျဉ်းများ</b>:
-1. လောင်းကစားကြော်ငြာများ၊ refer မပြုလုပ်ပါနှင့်။
+1. လောင်းကစားကြော်ငြာများ၊ refer မပြုလုပ်ပါနဲ့။
 2. တော်လှန်ရေးနှင့် ပတ်သတ်သောအကြောင်းအရာများကို လွတ်လပ်စွာဆွေးနွေးနိုင်ပါသည်။
 3.အဖွဲ့ဝင် မိဘပြည်သူများ စိတ်အနှောက်အယှက်ဖြစ်စေသည် message များ မပို့ရ ။ 
 4.တော်လှန်ပြည်သူအချင်းချင်း စိတ်ဝမ်းကွဲစေနိုင်သော စကားလုံးများမပြော ဆိုရ။
@@ -176,4 +176,25 @@ async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode=ParseMode.HTML
                 )
             except Exception as e:
-                logger.error
+                logger.error(f"Report sending error: {e}")
+
+# Async main function
+async def main():
+    TOKEN = os.getenv("BOT_TOKEN")  # Make sure to set this in your .env file
+
+    app = Application.builder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("rules", rules))
+    app.add_handler(CommandHandler("admin", admin_list))
+    app.add_handler(CommandHandler("ban", ban_user))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
+    app.add_handler(MessageHandler(filters.TEXT, filter_links))
+
+    print("🤖 Bot is starting...")
+    await app.run_polling()
+
+# Entry point
+if __name__ == "__main__":
+    asyncio.create_task(main())  # Non-blocking async task creation
+    asyncio.get_event_loop().run_forever()  # Ensure the event loop keeps running
