@@ -196,5 +196,4 @@ async def main():
 
 # Entry point
 if __name__ == "__main__":
-    asyncio.create_task(main())  # Non-blocking async task creation
-    asyncio.get_event_loop().run_forever()  # Ensure the event loop keeps running
+    asyncio.run(main())  # Use asyncio.run to properly start and close the event loop
