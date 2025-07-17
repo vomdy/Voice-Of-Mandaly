@@ -26,18 +26,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Helper function to check admin status
 async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     user = update.effective_user
     chat = update.effective_chat
     admins = await context.bot.get_chat_administrators(chat.id)
     return any(admin.user.id == user.id for admin in admins)
 
-# /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Hello! I'm your group help bot.")
 
-# Welcome message
 async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if not update.message or not update.message.new_chat_members:
@@ -73,7 +70,6 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Welcome error: {e}")
 
-# Filter links
 async def filter_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.text:
         return
@@ -100,7 +96,6 @@ async def filter_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"Error in filter_links: {e}")
 
-# /rules
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     rules_text = """
 📜 <b>အုပ်စုစည်းမျဉ်းများ</b>:
@@ -112,7 +107,6 @@ async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
 """
     await update.message.reply_text(rules_text, parse_mode=ParseMode.HTML)
 
-# /admin
 async def admin_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         predefined_admins = [
@@ -129,7 +123,6 @@ async def admin_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Admin list error: {e}")
 
-# /ban
 async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await is_admin(update, context):
         await update.message.reply_text("❌ သင့်အား admin ဖြစ်ရပါမည်။")
@@ -149,7 +142,6 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Ban error: {e}")
         await update.message.reply_text("❌ Ban လုပ်ရာတွင် အမှားတစ်ခုဖြစ်နေပါသည်။")
 
-# /report
 async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         reported_msg = update.message.reply_to_message
@@ -178,25 +170,49 @@ async def report_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 logger.error(f"Report sending error: {e}")
 
-# Async main function
 async def main():
-    TOKEN = os.getenv("BOT_TOKEN")  # Make sure to set this in your .env file
+    TOKEN = os.getenv("BOT_TOKEN")
 
-    app = Application.builder().token(TOKEN).build()
+    try:
+        app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("rules", rules))
-    app.add_handler(CommandHandler("admin", admin_list))
-    app.add_handler(CommandHandler("ban", ban_user))
-    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
-    app.add_handler(MessageHandler(filters.TEXT, filter_links))
+        # Add handlers
+        app.add_handler(CommandHandler("start", start))
+        app.add_handler(CommandHandler("rules", rules))
+        app.add_handler(CommandHandler("admin", admin_list))
+        app.add_handler(CommandHandler("ban", ban_user))
+        app.add_handler(CommandHandler("report", report_user))
+        app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
+        app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), filter_links))
 
-    print("🤖 Bot is starting...")
-    await app.run_polling()
+        logger.info("🤖 Bot is starting...")
+        await app.initialize()
+        await app.start()
+        await app.updater.start_polling()
+        
+        while True:
+            await asyncio.sleep(3600)  # Keep the bot running
 
-# Entry point
+    except asyncio.CancelledError:
+        logger.info("🛑 Received stop signal, shutting down...")
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+    finally:
+        if 'app' in locals():
+            await app.updater.stop()
+            await app.stop()
+            await app.shutdown()
+
 if __name__ == "__main__":
     try:
-        asyncio.run(main())  # Use asyncio.run() to start event loop
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        logger.info("🛑 Bot stopped by user")
     except Exception as e:
-        logger.error(f"Main error: {e}")
+        logger.error(f"Main loop error: {e}")
+    finally:
+        pending = asyncio.all_tasks(loop=loop)
+        for task in pending:
+            task.cancel()
+        loop.close()
